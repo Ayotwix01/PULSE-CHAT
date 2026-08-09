@@ -25,7 +25,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'chat',
-    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -37,8 +36,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
 ]
 
 ROOT_URLCONF = 'chat_project.urls'
@@ -130,11 +127,11 @@ CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost:5173,http://127.0.0.1:5173',
-        "https://pulse-chat-ochre.vercel.app",
+        'http://localhost:5173,http://127.0.0.1:5173,https://pulse-chat-ochre.vercel.app',
     ).split(',')
     if origin.strip()
 ]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
