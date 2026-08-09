@@ -6,7 +6,7 @@ import ChatWindow from "./components/ChatWindow";
 import ProfileEditor from "./components/ProfileEditor";
 
 const API_BASE = (
-  import.meta.env.VITE_API_URL || "http://localhost:8000"
+  import.meta.env.VITE_API_URL || "https://pulse-chat-backend-ug5h.onrender.com"
 ).replace(/\/$/, "");
 const WS_BASE = (
   import.meta.env.VITE_WS_URL || API_BASE.replace(/^http/, "ws")
