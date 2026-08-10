@@ -12,24 +12,55 @@ User = get_user_model()
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user = self.scope['user']
+
+        print(
+            f"WEBSOCKET CONNECTING | "
+            f"user={getattr(self.user, 'username', 'unknown')} | "
+            f"conversation={self.scope['url_route']['kwargs'].get('conversation_id')}"
+        )
+
         if not self.user.is_authenticated:
-            await self.close()
+            print("WEBSOCKET REJECTED: unauthenticated")
+            await self.close(code=4001)
             return
 
-        self.conversation_id = self.scope['url_route']['kwargs'].get('conversation_id')
+        self.conversation_id = self.scope['url_route']['kwargs'].get(
+            'conversation_id'
+        )
         self.room_group_name = f'chat_{self.conversation_id}'
 
-        is_member = await self.is_conversation_member(self.conversation_id, self.user.id)
+        is_member = await self.is_conversation_member(
+            self.conversation_id,
+            self.user.id
+        )
+
         if not is_member:
-            await self.close()
+            print("WEBSOCKET REJECTED: user is not conversation member")
+            await self.close(code=4003)
             return
 
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
         await self.accept()
 
+        print("WEBSOCKET ACCEPTED")
+
     async def disconnect(self, close_code):
+        print(
+            f"WEBSOCKET DISCONNECTED | "
+            f"user={self.user.username} | "
+            f"conversation={self.conversation_id} | "
+            f"code={close_code}"
+        )
+
         if hasattr(self, 'room_group_name'):
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+        )
 
     async def receive_json(self, content, **kwargs):
         kind = content.get('kind')
