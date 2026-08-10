@@ -161,6 +161,10 @@ function App() {
     );
     socketRef.current = ws;
 
+    ws.onopen = () => {
+      console.log("WebSocket connection established.");
+    };
+
     ws.onmessage = (event) => {
       console.log("Received WebSocket message:", event.data);
       const payload = JSON.parse(event.data);
@@ -180,7 +184,8 @@ function App() {
       const incomingMessage = payload.message;
       setConversations((prev) =>
         prev.map((conversation) => {
-          if (conversation.id !== selectedConversationId) return conversation;
+          if (String(conversation.id) !== String(selectedConversationId))
+            return conversation;
           return {
             ...conversation,
             messages: [...(conversation.messages || []), incomingMessage],
@@ -188,9 +193,17 @@ function App() {
         }),
       );
     };
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+    ws.onclose = (event) => {
+      console.log(
+        `WebSocket connection closed (code: ${event.code}, reason: ${event.reason})`,
+      );
+    };
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) ws.close();
+      ws.close();
     };
   }, [selectedConversationId, token]);
 
