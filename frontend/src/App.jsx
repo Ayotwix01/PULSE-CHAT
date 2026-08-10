@@ -162,6 +162,7 @@ function App() {
     socketRef.current = ws;
 
     ws.onmessage = (event) => {
+      console.log("Received WebSocket message:", event.data);
       const payload = JSON.parse(event.data);
 
       if (payload.type === "game_event") {
