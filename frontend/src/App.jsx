@@ -150,42 +150,60 @@ function App() {
   }, [token]);
 
   useEffect(() => {
+    console.log("WEBSOCKET EFFECT RUN", {
+      selectedConversationId,
+      tokenExists: !!token,
+    });
+
     if (!token || !selectedConversationId) return;
 
     if (socketRef.current) {
+      console.log("Closing previous socket");
       socketRef.current.close();
     }
+
+    console.log(
+      "Creating WebSocket:",
+      `${WS_BASE}/ws/chat/${selectedConversationId}/`,
+    );
 
     const ws = new WebSocket(
       `${WS_BASE}/ws/chat/${selectedConversationId}/?token=${token}`,
     );
+
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WebSocket connection established.");
+      console.log("WebSocket OPEN");
     };
 
     ws.onmessage = (event) => {
-      console.log("Received WebSocket message:", event.data);
+      console.log("WebSocket MESSAGE:", event.data);
+
       const payload = JSON.parse(event.data);
 
       if (payload.type === "game_event") {
         const conversationId =
           payload.conversation_id ?? selectedConversationId;
+
         setGameState((prev) => ({
           ...prev,
           [conversationId]: payload.game,
         }));
+
         return;
       }
 
       if (payload.type !== "chat_message") return;
 
       const incomingMessage = payload.message;
+
       setConversations((prev) =>
         prev.map((conversation) => {
-          if (String(conversation.id) !== String(selectedConversationId))
+          if (String(conversation.id) !== String(selectedConversationId)) {
             return conversation;
+          }
+
           return {
             ...conversation,
             messages: [...(conversation.messages || []), incomingMessage],
@@ -193,17 +211,32 @@ function App() {
         }),
       );
     };
+
     ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+      console.error("WebSocket ERROR:", error);
     };
+
     ws.onclose = (event) => {
-      console.log(
-        `WebSocket connection closed (code: ${event.code}, reason: ${event.reason})`,
-      );
+      console.log("WebSocket CLOSED:", {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean,
+      });
     };
 
     return () => {
-      ws.close();
+      console.log("WEBSOCKET CLEANUP");
+
+      if (socketRef.current === ws) {
+        socketRef.current = null;
+      }
+
+      if (
+        ws.readyState === WebSocket.OPEN ||
+        ws.readyState === WebSocket.CONNECTING
+      ) {
+        ws.close();
+      }
     };
   }, [selectedConversationId, token]);
 
